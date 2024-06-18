@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/ilyakaznacheev/cleanenv"
-	"opertion-service/pkg/logging"
+	"operation-service/pkg/logging"
 	"sync"
 )
 

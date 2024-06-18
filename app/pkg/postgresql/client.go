@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sirupsen/logrus"
-	"opertion-service/internal/config"
-	"opertion-service/pkg/utils"
+	"operation-service/internal/config"
+	"operation-service/pkg/utils"
 	"time"
 )
 

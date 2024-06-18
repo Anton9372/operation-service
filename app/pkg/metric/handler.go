@@ -3,7 +3,7 @@ package metric
 import (
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"opertion-service/pkg/logging"
+	"operation-service/pkg/logging"
 )
 
 const (

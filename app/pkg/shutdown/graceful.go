@@ -2,7 +2,7 @@ package shutdown
 
 import (
 	"io"
-	"opertion-service/pkg/logging"
+	"operation-service/pkg/logging"
 	"os"
 	"os/signal"
 )
