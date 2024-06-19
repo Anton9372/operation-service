@@ -8,26 +8,44 @@ import (
 type Operation struct {
 	UUID         string    `json:"uuid"`
 	CategoryUUID string    `json:"category_uuid"`
-	Description  string    `json:"description"`
 	MoneySum     float64   `json:"money_sum"`
+	Description  string    `json:"description"`
 	DateTime     time.Time `json:"date_time"`
 }
 
 func NewOperation(dto dto.CreateOperationDTO) *Operation {
 	return &Operation{
 		CategoryUUID: dto.CategoryUUID,
-		Description:  dto.Description,
 		MoneySum:     dto.MoneySum,
+		Description:  dto.Description,
 		DateTime:     dto.DateTime,
 	}
 }
 
 func UpdatedOperation(existing Operation, dto dto.UpdateOperationDTO) *Operation {
-	updOperation := &Operation{
-		UUID:     dto.UUID,
-		DateTime: existing.DateTime,
+	updOperation := new(Operation)
+
+	updOperation.UUID = dto.UUID
+
+	if dto.CategoryUUID != "" {
+		updOperation.CategoryUUID = dto.CategoryUUID
+	} else {
+		updOperation.CategoryUUID = existing.CategoryUUID
 	}
+
+	if dto.MoneySum != 0 {
+		updOperation.MoneySum = dto.MoneySum
+	} else {
+		updOperation.MoneySum = existing.MoneySum
+	}
+
 	if dto.Description != "" {
 		updOperation.Description = dto.Description
+	} else {
+		updOperation.Description = existing.Description
 	}
+
+	updOperation.DateTime = existing.DateTime
+
+	return updOperation
 }

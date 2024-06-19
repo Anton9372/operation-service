@@ -19,16 +19,17 @@ func NewCategory(dto dto.CreateCategoryDTO) *Category {
 }
 
 func UpdatedCategory(existing Category, dto dto.UpdateCategoryDTO) *Category {
-	updCategory := &Category{
-		UUID: dto.UUID,
-		Type: existing.Type,
-	}
+	updCategory := new(Category)
+
+	updCategory.UUID = dto.UUID
 
 	if dto.Name != "" {
 		updCategory.Name = dto.Name
 	} else {
 		updCategory.Name = existing.Name
 	}
+
+	updCategory.Type = existing.Type
 
 	return updCategory
 }

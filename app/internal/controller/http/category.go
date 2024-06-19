@@ -15,7 +15,7 @@ import (
 
 const (
 	categoryURL       = "/api/category"
-	categoryBuIdURL   = "/api/category/uuid/:uuid"
+	categoryByIdURL   = "/api/category/uuid/:uuid"
 	categoryByNameURL = "/api/category/name/:name"
 )
 
@@ -43,10 +43,10 @@ func NewCategoryHandler(service CategoryService, logger *logging.Logger) Handler
 func (h *categoryHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, categoryURL, apperror.Middleware(h.CreateCategory))
 	router.HandlerFunc(http.MethodGet, categoryURL, apperror.Middleware(h.GetAllCategories))
-	router.HandlerFunc(http.MethodGet, categoryBuIdURL, apperror.Middleware(h.GetCategoryByUUID))
+	router.HandlerFunc(http.MethodGet, categoryByIdURL, apperror.Middleware(h.GetCategoryByUUID))
 	router.HandlerFunc(http.MethodGet, categoryByNameURL, apperror.Middleware(h.GetCategoryByName))
-	router.HandlerFunc(http.MethodPatch, categoryBuIdURL, apperror.Middleware(h.PartiallyUpdateCategory))
-	router.HandlerFunc(http.MethodDelete, categoryBuIdURL, apperror.Middleware(h.DeleteCategory))
+	router.HandlerFunc(http.MethodPatch, categoryByIdURL, apperror.Middleware(h.PartiallyUpdateCategory))
+	router.HandlerFunc(http.MethodDelete, categoryByIdURL, apperror.Middleware(h.DeleteCategory))
 }
 
 func (h *categoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) error {
@@ -202,6 +202,9 @@ func (h *categoryHandler) DeleteCategory(w http.ResponseWriter, r *http.Request)
 
 	params := r.Context().Value(httprouter.ParamsKey).(httprouter.Params)
 	categoryUUID := params.ByName("uuid")
+	if categoryUUID == "" {
+		return apperror.BadRequestError("category uuid must not be empty")
+	}
 
 	err := h.service.Delete(r.Context(), categoryUUID)
 	if err != nil {
