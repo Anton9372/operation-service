@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"operation-service/internal/apperror"
 	"operation-service/internal/controller/dto"
 	controller "operation-service/internal/controller/http"
 	"operation-service/internal/domain/entity"
@@ -17,22 +18,33 @@ type OperationRepo interface {
 }
 
 type operationService struct {
-	repository OperationRepo
-	logger     *logging.Logger
+	operationRepo OperationRepo
+	categoryRepo  CategoryRepo
+	logger        *logging.Logger
 }
 
-func NewOperationService(repository OperationRepo, logger *logging.Logger) controller.OperationService {
+func NewOperationService(operationRepo OperationRepo, categoryRepo CategoryRepo,
+	logger *logging.Logger) controller.OperationService {
 	return &operationService{
-		repository: repository,
-		logger:     logger,
+		operationRepo: operationRepo,
+		categoryRepo:  categoryRepo,
+		logger:        logger,
 	}
 }
 
 func (s *operationService) Create(ctx context.Context, dto dto.CreateOperationDTO) (string, error) {
-	//todo validation
+	if dto.MoneySum <= 0 {
+		return "", apperror.BadRequestError("money sum can not be negative or zero")
+	}
+
+	_, err := s.categoryRepo.FindByUUID(ctx, dto.CategoryUUID)
+	if err != nil {
+		return "", err
+	}
 
 	operation := entity.NewOperation(dto)
-	operationUUID, err := s.repository.Create(ctx, *operation)
+
+	operationUUID, err := s.operationRepo.Create(ctx, *operation)
 	if err != nil {
 		return "", fmt.Errorf("failed to create operation: %w", err)
 	}
@@ -40,7 +52,7 @@ func (s *operationService) Create(ctx context.Context, dto dto.CreateOperationDT
 }
 
 func (s *operationService) GetByUUID(ctx context.Context, uuid string) (entity.Operation, error) {
-	operation, err := s.repository.FindByUUID(ctx, uuid)
+	operation, err := s.operationRepo.FindByUUID(ctx, uuid)
 	if err != nil {
 		return operation, fmt.Errorf("failed to find operation by uuid: %w", err)
 	}
@@ -48,16 +60,23 @@ func (s *operationService) GetByUUID(ctx context.Context, uuid string) (entity.O
 }
 
 func (s *operationService) Update(ctx context.Context, dto dto.UpdateOperationDTO) error {
-	//todo validation
+	if dto.MoneySum < 0 {
+		return apperror.BadRequestError("money sum can not be negative")
+	}
 
-	operation, err := s.repository.FindByUUID(ctx, dto.UUID)
+	operation, err := s.operationRepo.FindByUUID(ctx, dto.UUID)
 	if err != nil {
 		return fmt.Errorf("failed to find operation by uuid: %w", err)
 	}
 
 	updOperation := entity.UpdatedOperation(operation, dto)
 
-	err = s.repository.Update(ctx, *updOperation)
+	_, err = s.categoryRepo.FindByUUID(ctx, updOperation.CategoryUUID)
+	if err != nil {
+		return err
+	}
+
+	err = s.operationRepo.Update(ctx, *updOperation)
 	if err != nil {
 		return fmt.Errorf("failed to update operation: %w", err)
 	}
@@ -65,7 +84,12 @@ func (s *operationService) Update(ctx context.Context, dto dto.UpdateOperationDT
 }
 
 func (s *operationService) Delete(ctx context.Context, uuid string) error {
-	err := s.repository.Delete(ctx, uuid)
+	_, err := s.operationRepo.FindByUUID(ctx, uuid)
+	if err != nil {
+		return err
+	}
+
+	err = s.operationRepo.Delete(ctx, uuid)
 	if err != nil {
 		return fmt.Errorf("failed to delete operation by uuid: %w", err)
 	}

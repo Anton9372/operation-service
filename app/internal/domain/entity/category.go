@@ -6,15 +6,17 @@ import (
 )
 
 type Category struct {
-	UUID string             `json:"uuid"`
-	Name string             `json:"name"`
-	Type types.CategoryType `json:"type"`
+	UUID     string             `json:"uuid"`
+	UserUUID string             `json:"user_uuid"`
+	Name     string             `json:"name"`
+	Type     types.CategoryType `json:"type"`
 }
 
 func NewCategory(dto dto.CreateCategoryDTO) *Category {
 	return &Category{
-		Name: dto.Name,
-		Type: dto.Type,
+		UserUUID: dto.UserUUID,
+		Name:     dto.Name,
+		Type:     dto.Type,
 	}
 }
 

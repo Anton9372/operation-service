@@ -60,8 +60,8 @@ func (r *operationRepo) FindByUUID(ctx context.Context, uuid string) (entity.Ope
 	defer cancel()
 
 	var operation entity.Operation
-	err := r.client.QueryRow(nCtx, query, uuid).Scan(&operation.UUID, operation.CategoryUUID, operation.MoneySum,
-		operation.Description, operation.DateTime)
+	err := r.client.QueryRow(nCtx, query, uuid).Scan(&operation.UUID, &operation.CategoryUUID, &operation.MoneySum,
+		&operation.Description, &operation.DateTime)
 	if err != nil {
 		return entity.Operation{}, handleSQLError(err, r.logger)
 	}

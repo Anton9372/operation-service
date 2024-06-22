@@ -18,7 +18,7 @@ func NewOperation(dto dto.CreateOperationDTO) *Operation {
 		CategoryUUID: dto.CategoryUUID,
 		MoneySum:     dto.MoneySum,
 		Description:  dto.Description,
-		DateTime:     dto.DateTime,
+		DateTime:     time.Now(),
 	}
 }
 

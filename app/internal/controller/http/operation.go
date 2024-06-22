@@ -15,7 +15,7 @@ import (
 
 const (
 	operationURL     = "/api/operation"
-	operationByIdURL = "/api/operation/uuid/:uuid"
+	operationByIdURL = "/api/operation/one/:uuid"
 )
 
 type OperationService interface {
@@ -38,22 +38,27 @@ func NewOperationHandler(service OperationService, logger *logging.Logger) Handl
 }
 
 func (h *operationHandler) Register(router *httprouter.Router) {
-	//TODO implement me
-	panic("implement me")
+	router.HandlerFunc(http.MethodPost, operationURL, apperror.Middleware(h.CreateOperation))
+	router.HandlerFunc(http.MethodGet, operationByIdURL, apperror.Middleware(h.GetOperationByUUID))
+	router.HandlerFunc(http.MethodPatch, operationByIdURL, apperror.Middleware(h.PartiallyUpdateOperation))
+	router.HandlerFunc(http.MethodDelete, operationByIdURL, apperror.Middleware(h.DeleteOperation))
 }
 
 func (h *operationHandler) CreateOperation(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Create operation")
-	defer utils.CloseRequestBody(h.logger, r.Body)
+	defer utils.CloseBody(h.logger, r.Body)
 	w.Header().Set("Content-Type", "application/json")
 
 	var createdOperation dto.CreateOperationDTO
 
 	if err := json.NewDecoder(r.Body).Decode(&createdOperation); err != nil {
+		h.logger.Error(err)
 		return apperror.BadRequestError("invalid JSON body")
 	}
 
-	//todo validation
+	if createdOperation.CategoryUUID == "" || createdOperation.MoneySum == 0 {
+		return apperror.BadRequestError("missing required fields")
+	}
 
 	operationUUID, err := h.service.Create(r.Context(), createdOperation)
 	if err != nil {
@@ -69,7 +74,7 @@ func (h *operationHandler) CreateOperation(w http.ResponseWriter, r *http.Reques
 
 func (h *operationHandler) GetOperationByUUID(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Get operation by uuid")
-	defer utils.CloseRequestBody(h.logger, r.Body)
+	defer utils.CloseBody(h.logger, r.Body)
 	w.Header().Set("Content-Type", "application/json")
 
 	params := r.Context().Value(httprouter.ParamsKey).(httprouter.Params)
@@ -101,7 +106,7 @@ func (h *operationHandler) GetOperationByUUID(w http.ResponseWriter, r *http.Req
 
 func (h *operationHandler) PartiallyUpdateOperation(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Update operation")
-	defer utils.CloseRequestBody(h.logger, r.Body)
+	defer utils.CloseBody(h.logger, r.Body)
 	w.Header().Set("Content-Type", "application/json")
 
 	params := r.Context().Value(httprouter.ParamsKey).(httprouter.Params)
@@ -130,7 +135,7 @@ func (h *operationHandler) PartiallyUpdateOperation(w http.ResponseWriter, r *ht
 
 func (h *operationHandler) DeleteOperation(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Delete operation")
-	defer utils.CloseRequestBody(h.logger, r.Body)
+	defer utils.CloseBody(h.logger, r.Body)
 	w.Header().Set("Content-Type", "application/json")
 
 	params := r.Context().Value(httprouter.ParamsKey).(httprouter.Params)

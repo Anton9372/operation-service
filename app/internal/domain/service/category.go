@@ -13,9 +13,8 @@ import (
 
 type CategoryRepo interface {
 	Create(ctx context.Context, category entity.Category) (string, error)
-	FindAll(ctx context.Context) ([]entity.Category, error)
 	FindByUUID(ctx context.Context, uuid string) (entity.Category, error)
-	FindByName(ctx context.Context, name string) (entity.Category, error)
+	FindByUserUUID(ctx context.Context, uuid string) ([]entity.Category, error)
 	Update(ctx context.Context, category entity.Category) error
 	Delete(ctx context.Context, uuid string) error
 }
@@ -45,14 +44,6 @@ func (s *categoryService) Create(ctx context.Context, dto dto.CreateCategoryDTO)
 	return categoryUUID, nil
 }
 
-func (s *categoryService) GetAll(ctx context.Context) ([]entity.Category, error) {
-	categories, err := s.repository.FindAll(ctx)
-	if err != nil {
-		return categories, fmt.Errorf("failed to get all categories: %w", err)
-	}
-	return categories, nil
-}
-
 func (s *categoryService) GetByUUID(ctx context.Context, uuid string) (entity.Category, error) {
 	category, err := s.repository.FindByUUID(ctx, uuid)
 	if err != nil {
@@ -61,22 +52,18 @@ func (s *categoryService) GetByUUID(ctx context.Context, uuid string) (entity.Ca
 	return category, nil
 }
 
-func (s *categoryService) GetByName(ctx context.Context, name string) (entity.Category, error) {
-	category, err := s.repository.FindByName(ctx, name)
+func (s *categoryService) GetByUserUUID(ctx context.Context, uuid string) ([]entity.Category, error) {
+	categories, err := s.repository.FindByUserUUID(ctx, uuid)
 	if err != nil {
-		return category, fmt.Errorf("failed to get category by name: %w", err)
+		return categories, fmt.Errorf("failed to get categories by user uuid: %w", err)
 	}
-	return category, nil
+	return categories, nil
 }
 
 func (s *categoryService) Update(ctx context.Context, dto dto.UpdateCategoryDTO) error {
-	if dto.Name == "" {
-		return apperror.BadRequestError("category name must not be empty")
-	}
-
 	category, err := s.repository.FindByUUID(ctx, dto.UUID)
 	if err != nil {
-		return fmt.Errorf("failed to find category bu uuid: %w", err)
+		return err
 	}
 
 	updCategory := entity.UpdatedCategory(category, dto)
@@ -89,7 +76,12 @@ func (s *categoryService) Update(ctx context.Context, dto dto.UpdateCategoryDTO)
 }
 
 func (s *categoryService) Delete(ctx context.Context, uuid string) error {
-	err := s.repository.Delete(ctx, uuid)
+	_, err := s.repository.FindByUUID(ctx, uuid)
+	if err != nil {
+		return err
+	}
+
+	err = s.repository.Delete(ctx, uuid)
 	if err != nil {
 		return fmt.Errorf("failed to delete category: %w", err)
 	}

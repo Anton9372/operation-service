@@ -40,9 +40,9 @@ func handleSQLError(err error, logger *logging.Logger) error {
 			pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState())
 		logger.Error(newErr)
 
-		if pgErr.Code == "23505" { //uniqueness violation
-			return apperror.BadRequestError("This category name already exists")
-		}
+		//if pgErr.Code == "23505" { //uniqueness violation
+		//	return apperror.BadRequestError("")
+		//}
 		return newErr
 	}
 
@@ -52,9 +52,9 @@ func handleSQLError(err error, logger *logging.Logger) error {
 func (r *categoryRepo) Create(ctx context.Context, category entity.Category) (string, error) {
 	query := `
 				INSERT INTO categories
-					(name, type)
+					(user_id, name, type)
 				VALUES
-					($1, $2)
+					($1, $2, $3)
 				RETURNING id;
 	`
 	r.logger.Trace(fmt.Sprintf("SQL query: %s", utils.FormatSQLQuery(query)))
@@ -63,7 +63,7 @@ func (r *categoryRepo) Create(ctx context.Context, category entity.Category) (st
 	defer cancel()
 
 	var categoryUUID string
-	err := r.client.QueryRow(nCtx, query, category.Name, category.Type).Scan(&categoryUUID)
+	err := r.client.QueryRow(nCtx, query, category.UserUUID, category.Name, category.Type).Scan(&categoryUUID)
 	if err != nil {
 		return "", handleSQLError(err, r.logger)
 	}
@@ -71,44 +71,10 @@ func (r *categoryRepo) Create(ctx context.Context, category entity.Category) (st
 	return categoryUUID, nil
 }
 
-func (r *categoryRepo) FindAll(ctx context.Context) ([]entity.Category, error) {
-	query := `
-				SELECT
-					id, name, type
-				FROM
-					categories
-	`
-	r.logger.Trace(fmt.Sprintf("SQL query: %s", utils.FormatSQLQuery(query)))
-
-	nCtx, cancel := context.WithTimeout(ctx, queryWaitTime)
-	defer cancel()
-
-	rows, err := r.client.Query(nCtx, query)
-	if err != nil {
-		return nil, handleSQLError(err, r.logger)
-	}
-	defer rows.Close()
-
-	categories := make([]entity.Category, 0)
-	for rows.Next() {
-		var category entity.Category
-		err = rows.Scan(&category.UUID, &category.Name, &category.Type)
-		if err != nil {
-			return nil, err
-		}
-		categories = append(categories, category)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return categories, nil
-}
-
 func (r *categoryRepo) FindByUUID(ctx context.Context, uuid string) (entity.Category, error) {
 	query := `
 				SELECT
-					id, name, type
+					id, user_id, name, type
 				FROM
 					categories
 				WHERE
@@ -120,7 +86,7 @@ func (r *categoryRepo) FindByUUID(ctx context.Context, uuid string) (entity.Cate
 	defer cancel()
 
 	var category entity.Category
-	err := r.client.QueryRow(nCtx, query, uuid).Scan(&category.UUID, &category.Name, &category.Type)
+	err := r.client.QueryRow(nCtx, query, uuid).Scan(&category.UUID, &category.UserUUID, &category.Name, &category.Type)
 	if err != nil {
 		return entity.Category{}, handleSQLError(err, r.logger)
 	}
@@ -128,27 +94,40 @@ func (r *categoryRepo) FindByUUID(ctx context.Context, uuid string) (entity.Cate
 	return category, nil
 }
 
-func (r *categoryRepo) FindByName(ctx context.Context, name string) (entity.Category, error) {
+func (r *categoryRepo) FindByUserUUID(ctx context.Context, uuid string) ([]entity.Category, error) {
 	query := `
 				SELECT
-					id, name, type
+					id, user_id, name, type
 				FROM
-		    		categories
+					categories
 				WHERE
-		    		name = $1
+				    user_id = $1
 	`
 	r.logger.Trace(fmt.Sprintf("SQL query: %s", utils.FormatSQLQuery(query)))
 
 	nCtx, cancel := context.WithTimeout(ctx, queryWaitTime)
 	defer cancel()
 
-	var category entity.Category
-	err := r.client.QueryRow(nCtx, query, name).Scan(&category.UUID, &category.Name, &category.Type)
+	rows, err := r.client.Query(nCtx, query, uuid)
 	if err != nil {
-		return entity.Category{}, handleSQLError(err, r.logger)
+		return nil, handleSQLError(err, r.logger)
+	}
+	defer rows.Close()
+
+	categories := make([]entity.Category, 0)
+	for rows.Next() {
+		var category entity.Category
+		err = rows.Scan(&category.UUID, &category.UserUUID, &category.Name, &category.Type)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
 	}
 
-	return category, nil
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return categories, nil
 }
 
 func (r *categoryRepo) Update(ctx context.Context, category entity.Category) error {
@@ -177,12 +156,11 @@ func (r *categoryRepo) Update(ctx context.Context, category entity.Category) err
 }
 
 func (r *categoryRepo) Delete(ctx context.Context, uuid string) error {
-	//TODO
 	query := `
 				DELETE FROM
-			    	categories
-				WHERE 
-		    		id = $1
+					categories
+				WHERE
+					id = $1
 	`
 	r.logger.Trace(fmt.Sprintf("SQL query: %s", utils.FormatSQLQuery(query)))
 

@@ -34,6 +34,7 @@ func main() {
 	metricHandler := metric.Handler{Logger: logger}
 	metricHandler.Register(router)
 
+	logger.Info("storage initializing")
 	postgresClient, err := postgresql.NewClient(context.Background(), 5, *cfg)
 	if err != nil {
 		logger.Fatal(err)
@@ -43,6 +44,11 @@ func main() {
 	categoryService := service.NewCategoryService(categoryStorage, logger)
 	categoryHandler := controller.NewCategoryHandler(categoryService, logger)
 	categoryHandler.Register(router)
+
+	operationStorage := postgres.NewOperationRepo(postgresClient, logger)
+	operationService := service.NewOperationService(operationStorage, categoryStorage, logger)
+	operationHandler := controller.NewOperationHandler(operationService, logger)
+	operationHandler.Register(router)
 
 	logger.Info("start application")
 	start(router, logger, cfg)
