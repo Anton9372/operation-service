@@ -36,6 +36,7 @@ func (r *operationRepo) Create(ctx context.Context, operation entity.Operation) 
 	defer cancel()
 
 	var operationUUID string
+	r.logger.Debug(operation.CategoryUUID)
 	err := r.client.QueryRow(nCtx, query, operation.CategoryUUID, operation.MoneySum, operation.Description,
 		operation.DateTime).Scan(&operationUUID)
 	if err != nil {

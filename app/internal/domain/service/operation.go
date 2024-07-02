@@ -7,6 +7,7 @@ import (
 	"operation-service/internal/controller/dto"
 	controller "operation-service/internal/controller/http"
 	"operation-service/internal/domain/entity"
+	"operation-service/internal/domain/types"
 	"operation-service/pkg/logging"
 )
 
@@ -37,12 +38,16 @@ func (s *operationService) Create(ctx context.Context, dto dto.CreateOperationDT
 		return "", apperror.BadRequestError("money sum can not be negative or zero")
 	}
 
-	_, err := s.categoryRepo.FindByUUID(ctx, dto.CategoryUUID)
+	category, err := s.categoryRepo.FindByUUID(ctx, dto.CategoryUUID)
 	if err != nil {
 		return "", err
 	}
 
 	operation := entity.NewOperation(dto)
+
+	if category.Type == types.ExpenseType {
+		operation.MoneySum = -operation.MoneySum
+	}
 
 	operationUUID, err := s.operationRepo.Create(ctx, *operation)
 	if err != nil {

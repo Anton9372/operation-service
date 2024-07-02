@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	operationURL     = "/api/operation"
-	operationByIdURL = "/api/operation/one/:uuid"
+	operationURL     = "/api/operations"
+	operationByIdURL = "/api/operations/one/:uuid"
 )
 
 type OperationService interface {
@@ -44,6 +44,17 @@ func (h *operationHandler) Register(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodDelete, operationByIdURL, apperror.Middleware(h.DeleteOperation))
 }
 
+// CreateOperation
+// @Summary 	Create operation
+// @Description Creates new operation
+// @Tags 		Operation
+// @Accept		json
+// @Param 		input	body 	 dto.CreateOperationDTO	true	"Operation's data"
+// @Success 	201
+// @Failure 	400 	{object} apperror.AppError "Validation error"
+// @Failure 	418 	{object} apperror.AppError "Something wrong with application logic"
+// @Failure 	500 	{object} apperror.AppError "Internal server error"
+// @Router /operations [post]
 func (h *operationHandler) CreateOperation(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Create operation")
 	defer utils.CloseBody(h.logger, r.Body)
@@ -65,13 +76,24 @@ func (h *operationHandler) CreateOperation(w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	w.Header().Set("Location", fmt.Sprintf("%s:%s", operationURL, operationUUID))
+	w.Header().Set("Location", fmt.Sprintf("%s/%s", operationURL, operationUUID))
 	w.WriteHeader(http.StatusCreated)
 
 	h.logger.Info("Create operation successfully")
 	return nil
 }
 
+// GetOperationByUUID
+// @Summary 	Get operation by uuid
+// @Description Get operation by uuid
+// @Tags 		Operation
+// @Produce 	json
+// @Param 		uuid 	path 	 string 	true   "Operation's uuid"
+// @Success 	200		{object} entity.Operation  "Operation"
+// @Failure 	404 	{object} apperror.AppError "Operation not found"
+// @Failure 	418 	{object} apperror.AppError "Something wrong with application logic"
+// @Failure 	500 	{object} apperror.AppError "Internal server error"
+// @Router 		/operations/one/	[get]
 func (h *operationHandler) GetOperationByUUID(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Get operation by uuid")
 	defer utils.CloseBody(h.logger, r.Body)
@@ -104,6 +126,18 @@ func (h *operationHandler) GetOperationByUUID(w http.ResponseWriter, r *http.Req
 	return nil
 }
 
+// PartiallyUpdateOperation
+// @Summary 	Update Operation
+// @Description Update Operation
+// @Tags 		Operation
+// @Accept		json
+// @Param 		uuid 		path 	 string 				true  "Operation's uuid"
+// @Param 		input 		body 	 dto.UpdateOperationDTO true  "Operation's data"
+// @Success 	204
+// @Failure 	400 	{object} apperror.AppError "Validation error"
+// @Failure 	418 	{object} apperror.AppError "Something wrong with application logic"
+// @Failure 	500 	{object} apperror.AppError "Internal server error"
+// @Router /operations/one [patch]
 func (h *operationHandler) PartiallyUpdateOperation(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Update operation")
 	defer utils.CloseBody(h.logger, r.Body)
@@ -133,6 +167,16 @@ func (h *operationHandler) PartiallyUpdateOperation(w http.ResponseWriter, r *ht
 	return nil
 }
 
+// DeleteOperation
+// @Summary 	Delete operation
+// @Description Delete operation
+// @Tags 		Operation
+// @Param 		uuid 	path 	 string 	true  "Operation's uuid"
+// @Success 	204
+// @Failure 	404 	{object} apperror.AppError "Operation is not found"
+// @Failure 	418 	{object} apperror.AppError "Something wrong with application logic"
+// @Failure 	500 	{object} apperror.AppError "Internal server error"
+// @Router /operations/one [delete]
 func (h *operationHandler) DeleteOperation(w http.ResponseWriter, r *http.Request) error {
 	h.logger.Info("Delete operation")
 	defer utils.CloseBody(h.logger, r.Body)

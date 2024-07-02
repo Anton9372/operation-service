@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net"
 	"net/http"
+	_ "operation-service/docs"
 	"operation-service/internal/config"
 	"operation-service/internal/controller/http"
 	"operation-service/internal/domain/service"
@@ -20,6 +22,17 @@ import (
 	"time"
 )
 
+// @Title		Operation-service API
+// @Version		1.0
+// @Description	Service for managing categories and financial operations
+
+// @Contact.name	Anton
+// @Contact.email	ap363402@gmail.com
+
+// @License.name Apache 2.0
+
+// @Host 		localhost:10002
+// @BasePath 	/api
 func main() {
 	logging.InitLogger()
 	logger := logging.GetLogger()
@@ -30,6 +43,10 @@ func main() {
 
 	logger.Info("router initializing")
 	router := httprouter.New()
+
+	logger.Info("swagger docs initializing")
+	router.Handler(http.MethodGet, "/swagger", http.RedirectHandler("/swagger/index.html", http.StatusMovedPermanently))
+	router.Handler(http.MethodGet, "/swagger/*any", httpSwagger.WrapHandler)
 
 	metricHandler := metric.Handler{Logger: logger}
 	metricHandler.Register(router)

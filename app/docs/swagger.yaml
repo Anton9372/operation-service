@@ -1,0 +1,377 @@
+basePath: /api
+definitions:
+  apperror.AppError:
+    properties:
+      code:
+        type: string
+      developer_message:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.CreateCategoryDTO:
+    properties:
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/types.CategoryType'
+      user_uuid:
+        type: string
+    type: object
+  dto.CreateOperationDTO:
+    properties:
+      category_uuid:
+        type: string
+      description:
+        type: string
+      money_sum:
+        type: number
+    type: object
+  dto.UpdateCategoryDTO:
+    properties:
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+  dto.UpdateOperationDTO:
+    properties:
+      category_uuid:
+        type: string
+      description:
+        type: string
+      money_sum:
+        type: number
+      uuid:
+        type: string
+    type: object
+  entity.Category:
+    properties:
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/types.CategoryType'
+      user_uuid:
+        type: string
+      uuid:
+        type: string
+    type: object
+  entity.Operation:
+    properties:
+      category_uuid:
+        type: string
+      date_time:
+        type: string
+      description:
+        type: string
+      money_sum:
+        type: number
+      uuid:
+        type: string
+    type: object
+  types.CategoryType:
+    enum:
+    - Income
+    - Expense
+    type: string
+    x-enum-varnames:
+    - IncomeType
+    - ExpenseType
+host: localhost:10002
+info:
+  contact:
+    email: ap363402@gmail.com
+    name: Anton
+  description: Service for managing categories and financial operations
+  license:
+    name: Apache 2.0
+  title: Operation-service API
+  version: "1.0"
+paths:
+  /categories:
+    post:
+      consumes:
+      - application/json
+      description: Creates new category
+      parameters:
+      - description: Category data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateCategoryDTO'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Create category
+      tags:
+      - Category
+  /categories/one:
+    delete:
+      description: Delete category
+      parameters:
+      - description: Category's uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Category is not found
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Delete category
+      tags:
+      - Category
+    patch:
+      consumes:
+      - application/json
+      description: Update category
+      parameters:
+      - description: Category's uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: Category's data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateCategoryDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Update category
+      tags:
+      - Category
+  /categories/one/:
+    get:
+      description: Get category by uuid
+      parameters:
+      - description: Category's uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category
+          schema:
+            $ref: '#/definitions/entity.Category'
+        "404":
+          description: Category not found
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Get category by uuid
+      tags:
+      - Category
+  /categories/user_uuid/:
+    get:
+      description: Get list of categories belonging to user
+      parameters:
+      - description: User's uuid
+        in: path
+        name: user_uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Categories
+          schema:
+            items:
+              $ref: '#/definitions/entity.Category'
+            type: array
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Get categories by user's uuid
+      tags:
+      - Category
+  /metric:
+    get:
+      description: Checks that the server is up and running
+      responses:
+        "204":
+          description: No Content
+      summary: Heartbeat
+      tags:
+      - Heartbeat
+  /operations:
+    post:
+      consumes:
+      - application/json
+      description: Creates new operation
+      parameters:
+      - description: Operation's data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateOperationDTO'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Create operation
+      tags:
+      - Operation
+  /operations/one:
+    delete:
+      description: Delete operation
+      parameters:
+      - description: Operation's uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Operation is not found
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Delete operation
+      tags:
+      - Operation
+    patch:
+      consumes:
+      - application/json
+      description: Update Operation
+      parameters:
+      - description: Operation's uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: Operation's data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateOperationDTO'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Update Operation
+      tags:
+      - Operation
+  /operations/one/:
+    get:
+      description: Get operation by uuid
+      parameters:
+      - description: Operation's uuid
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation
+          schema:
+            $ref: '#/definitions/entity.Operation'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: Something wrong with application logic
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Get operation by uuid
+      tags:
+      - Operation
+swagger: "2.0"
